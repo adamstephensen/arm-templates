@@ -20,7 +20,6 @@
         "funcName": "[concat(parameters('name'),parameters('entropy'))]",
         "storageName": "[concat(parameters('name'),parameters('entropy'))]",
         "appInsightsName": "[concat(parameters('name'),parameters('entropy'))]",
-        "logicAppName": "[concat(parameters('name'),parameters('entropy'))]",
         "appInsightsLocation": "East US",
         "storageAccountType": "Standard_LRS"
     },
@@ -49,28 +48,6 @@
             "properties": {
                 "name": "[variables('funcName')]"
             }
-        },
-        {
-            "comments": "Generalized from resource: '/subscriptions/d2b580f3-ca20-4684-905f-2bbe6fdb0e27/resourceGroups/adams-scott-demo/providers/Microsoft.Logic/workflows/adamtestla'.",
-            "type": "Microsoft.Logic/workflows",
-            "name": "[variables('logicAppName')]",
-            "apiVersion": "2017-07-01",
-            "location": "[variables('location')]",
-            "tags": {},
-            "scale": null,
-            "properties": {
-                "state": "Enabled",
-                "definition": {
-                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "triggers": {},
-                    "actions": {},
-                    "outputs": {}
-                },
-                "parameters": {}
-            },
-            "dependsOn": []
         },
         {
             "type": "microsoft.insights/components",
