@@ -1,0 +1,213 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "String"
+        },
+        "appId": {
+            "type": "String"
+        },
+        "appKey": {
+            "type": "String"
+        },
+        "entropy": {
+            "type": "String"
+        }
+    },
+    "variables": {
+        "botName": "[parameters('name')]",
+        "funcName": "[concat(parameters('name'),parameters('entropy'))]",
+        "storageName": "[concat(parameters('name'),parameters('entropy'))]",
+        "appInsightsName": "[concat(parameters('name'),parameters('entropy'))]",
+        "logicAppName": "[concat(parameters('name'),parameters('entropy'))]",
+        "appInsightsLocation": "East US",
+        "storageAccountType": "Standard_LRS"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageName')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "name": "[variables('funcName')]",
+            "apiVersion": "2016-09-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "name": "[variables('funcName')]"
+            }
+        },
+        {
+            "comments": "Generalized from resource: '/subscriptions/d2b580f3-ca20-4684-905f-2bbe6fdb0e27/resourceGroups/adams-scott-demo/providers/Microsoft.Logic/workflows/adamtestla'.",
+            "type": "Microsoft.Logic/workflows",
+            "name": "[variables('logicAppName')]",
+            "apiVersion": "2017-07-01",
+            "location": "[variables('location')]",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "triggers": {},
+                    "actions": {},
+                    "outputs": {}
+                },
+                "parameters": {}
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "microsoft.insights/components",
+            "kind": "web",
+            "name": "[variables('appInsightsName')]",
+            "apiVersion": "2014-04-01",
+            "location": "[variables('appInsightsLocation')]",
+            "tags": {
+                "[concat('hidden-link:', resourceId('Microsoft.BotService/botServices/', variables('botName')))]": "Resource",
+                "[concat('hidden-link:', resourceId('Microsoft.Web/sites/', variables('funcName')))]": "Resource"
+            },
+            "properties": {
+                "ApplicationId": "[parameters('appId')]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "kind": "functionapp",
+            "name": "[variables('funcName')]",
+            "apiVersion": "2015-08-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "name": "[variables('funcName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('funcName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2015-05-01-preview').key1,';')]"
+                        },
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2015-05-01-preview').key1,';')]"
+                        },
+                        {
+                            "name": "BotEnv",
+                            "value": "prod"
+                        },
+                        {
+                            "name": "BotId",
+                            "value": "[variables('botName')]"
+                        },
+                        {
+                            "name": "MicrosoftAppId",
+                            "value": "[parameters('appId')]"
+                        },
+                        {
+                            "name": "MicrosoftAppPassword",
+                            "value": "[parameters('appKey')]"
+                        },
+                        {
+                            "name": "BotStateEndpoint",
+                            "value": ""
+                        },
+                        {
+                            "name": "BotOpenIdMetadata",
+                            "value": ""
+                        },
+                        {
+                            "name": "UseTableStorageForConversationState",
+                            "value": "true"
+                        },
+                        {
+                            "name": "BotDevAppInsightsKey",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+                        },
+                        {
+                            "name": "BotDevAppInsightsName",
+                            "value": "[variables('appInsightsName')]"
+                        },
+                        {
+                            "name": "BotDevAppInsightsAppId",
+                            "value": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').AppId]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~1"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts/', variables('storageName')), '2015-05-01-preview').key1,';')]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[variables('funcName')]"
+                        },
+                        {
+                            "name": "AzureWebJobsBotFrameworkDirectLineSecret",
+                            "value": ""
+                        },
+                        {
+                            "name": "AzureWebJobsBotFrameworkDirectLineEndpoint",
+                            "value": "https://directline.botframework.com/"
+                        },
+                        {
+                            "name": "WEBSITE_USE_PLACEHOLDER",
+                            "value": "0"
+                        }
+                    ],
+                    "cors": {
+                        "allowedOrigins": [
+                            "https://botservice.hosting.portal.azure.net",
+                            "https://hosting.onecloud.azure-test.net/",
+                            "https://functions.azure.com",
+                            "https://functions-staging.azure.com",
+                            "https://functions-next.azure.com"
+                        ]
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+                "[resourceId('Microsoft.Web/serverfarms/', variables('funcName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.BotService/botServices",
+            "sku": {
+                "name": "S1"
+            },
+            "kind": "function",
+            "name": "[variables('botName')]",
+            "apiVersion": "2017-12-01",
+            "location": "global",
+            "properties": {
+                "name": "[variables('botName')]",
+                "displayName": "[variables('botName')]",
+                "endpoint": "[concat('https://', variables('funcName'), '.azurewebsites.net',  '/api/messages?code=', 'NYI')]",
+                "msaAppId": "[parameters('appId')]",
+                "developerAppInsightsApplicationId": "[variables('appInsightsName')]",
+                "developerAppInsightKey": "[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/', variables('funcName'))]",
+                "[resourceId('microsoft.insights/components/', variables('appInsightsName'))]"
+            ]
+        }
+    ],
+    "outputs": {}
+}
